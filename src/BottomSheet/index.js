@@ -17,16 +17,6 @@ import styles from './styles';
 
 const { height } = Dimensions.get('window');
 
-const animateMove = (y, toValue, callback) => {
-  Animated.spring(y, {
-    toValue: -toValue,
-    tension: 50,
-    useNativeDriver: false,
-  }).start((finished) => {
-    finished && callback && callback(y);
-  });
-};
-
 const removeDuplicates = (array) => {
   let set = new Set(array);
   let values = set.values();
@@ -36,19 +26,30 @@ const removeDuplicates = (array) => {
 const BottomSheet = forwardRef(
   (
     {
-      children,
-      style,
-      positions,
-      handle,
       backdropColor,
-      onStateChange,
+      children,
+      handle,
+      style,
       onMove,
+      onStateChange,
+      useNativeDriver = false,
+      yPositions,
     },
     ref
   ) => {
-    const positionsArray = removeDuplicates(positions).sort((a, b) => a - b);
+    const positionsArray = removeDuplicates(yPositions).sort((a, b) => a - b);
     const lowestPosition = positionsArray[0];
     const highestPosition = positionsArray[positionsArray.length - 1];
+
+    const animateMove = (y, toValue, callback) => {
+      Animated.spring(y, {
+        toValue: -toValue,
+        tension: 50,
+        useNativeDriver,
+      }).start((finished) => {
+        finished && callback && callback(y);
+      });
+    };
 
     const getNextPosition = (currentState, val, margin) => {
       // const currentIndex = positionsArray.indexOf(currentState);
@@ -114,11 +115,14 @@ const BottomSheet = forwardRef(
     ).current;
 
     useImperativeHandle(ref, () => ({
-      present: () => {
+      open: () => {
         moveToPosition(highestPosition);
       },
-      dismiss: () => {
+      close: () => {
         moveToPosition(lowestPosition);
+      },
+      moveTo: (y) => {
+        moveToPosition(y);
       },
     }));
 
@@ -177,17 +181,18 @@ const BottomSheet = forwardRef(
 );
 
 BottomSheet.propTypes = {
+  backdropColor: PropTypes.string,
   children: PropTypes.oneOfType([
     PropTypes.node,
     PropTypes.element,
     PropTypes.arrayOf(PropTypes.element),
   ]),
-  style: PropTypes.object,
-  positions: PropTypes.arrayOf(PropTypes.number),
   handle: PropTypes.element,
-  backdropColor: PropTypes.string,
-  onStateChange: PropTypes.func,
   onMove: PropTypes.func,
+  onStateChange: PropTypes.func,
+  style: PropTypes.object,
+  useNativeDriver: PropTypes.bool.isRequired,
+  yPositions: PropTypes.arrayOf(PropTypes.number),
 };
 
 export default BottomSheet;
