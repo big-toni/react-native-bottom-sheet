@@ -1,4 +1,4 @@
-# react-native-simple-bottom-sheet
+# @big-toni/react-native-bottom-sheet
 
 ## Features
 
@@ -10,6 +10,6 @@
 
 ## Setup
 
-This library is available on npm, install it with: `npm i react-native-simple-bottom-sheet` or `yarn add react-native-simple-bottom-sheet`.
+This library is available on npm, install it with: `npm i @big-toni/react-native-bottom-sheet` or `yarn add @big-toni/react-native-bottom-sheet`.
 
 ## Usage
