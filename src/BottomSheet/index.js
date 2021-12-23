@@ -1,0 +1,193 @@
+import PropTypes from 'prop-types';
+import React, {
+  forwardRef,
+  useRef,
+  useState,
+  useImperativeHandle,
+} from 'react';
+import {
+  Animated,
+  PanResponder,
+  Dimensions,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import styles from './styles';
+
+const { height } = Dimensions.get('window');
+
+const animateMove = (y, toValue, callback) => {
+  Animated.spring(y, {
+    toValue: -toValue,
+    tension: 50,
+    useNativeDriver: false,
+  }).start((finished) => {
+    finished && callback && callback(y);
+  });
+};
+
+const removeDuplicates = (array) => {
+  let set = new Set(array);
+  let values = set.values();
+  return Array.from(values);
+};
+
+const BottomSheet = forwardRef(
+  (
+    {
+      children,
+      style,
+      positions,
+      handle,
+      backdropColor,
+      onStateChange,
+      onMove,
+    },
+    ref
+  ) => {
+    const positionsArray = removeDuplicates(positions).sort((a, b) => a - b);
+    const lowestPosition = positionsArray[0];
+    const highestPosition = positionsArray[positionsArray.length - 1];
+
+    const getNextPosition = (currentState, val, margin) => {
+      // const currentIndex = positionsArray.indexOf(currentState);
+      // const higherState = positionsArray[currentIndex + 1];
+      // const lowerState = positionsArray[currentIndex - 1];
+      // if (val > currentState + margin && higherState !== undefined) {
+      //   return higherState;
+      // } else if (val < currentState - margin && lowerState !== undefined) {
+      //   return lowerState;
+      // } else {
+      //   return val;
+      // }
+
+      return positionsArray.reduce((a, b) => {
+        let aDiff = Math.abs(a - val);
+        let bDiff = Math.abs(b - val);
+
+        if (aDiff == bDiff) {
+          // Choose largest vs smallest (> vs <)
+          return a > b ? a : b;
+        } else {
+          return bDiff < aDiff ? b : a;
+        }
+      });
+    };
+
+    const y = useRef(new Animated.Value(-lowestPosition)).current;
+    const [position, setPosition] = useState(-y._value);
+    const margin = 0.1 * height;
+    const movementValue = (moveY) => height - moveY;
+
+    const onPanResponderMove = (_, { moveY }) => {
+      const val = movementValue(moveY);
+      animateMove(y, val);
+      onMove && onMove(val);
+    };
+
+    const onPanResponderRelease = (_, { moveY }) => {
+      const valueToMove = height - moveY;
+      const nextPosition = getNextPosition(position, valueToMove, margin);
+      moveToPosition(nextPosition);
+    };
+
+    const moveToPosition = (position) => {
+      setPosition(position);
+      animateMove(y, position);
+
+      onStateChange && onStateChange(position);
+      onMove && onMove(position);
+    };
+
+    const onMoveShouldSetPanResponder = (_, { dy }) => {
+      return Math.abs(dy) >= 10;
+    };
+
+    const panResponder = useRef(
+      PanResponder.create({
+        onMoveShouldSetPanResponder,
+        onStartShouldSetPanResponderCapture: onMoveShouldSetPanResponder,
+        onPanResponderMove,
+        onPanResponderRelease,
+      })
+    ).current;
+
+    useImperativeHandle(ref, () => ({
+      present: () => {
+        moveToPosition(highestPosition);
+      },
+      dismiss: () => {
+        moveToPosition(lowestPosition);
+      },
+    }));
+
+    const opacity = y.interpolate({
+      inputRange: [-highestPosition, -lowestPosition],
+      outputRange: [0.5, 0],
+    });
+
+    // NOTE: Need to pass pan handlers to handle element
+    const Handle =
+      handle &&
+      React.cloneElement(handle, {
+        ...panResponder.panHandlers,
+        pointerEvents: 'auto',
+      });
+
+    const isOpen = position === highestPosition;
+
+    return backdropColor ? (
+      <View pointerEvents="box-none" style={[StyleSheet.absoluteFill]}>
+        <Animated.View
+          pointerEvents={isOpen ? 'auto' : 'box-none'}
+          style={[
+            backdropColor && { opacity, backgroundColor: backdropColor },
+            StyleSheet.absoluteFill,
+          ]}
+        >
+          {isOpen && (
+            <TouchableOpacity
+              onPress={() => moveToPosition(lowestPosition)}
+              style={[StyleSheet.absoluteFill]}
+            />
+          )}
+        </Animated.View>
+        <Animated.View
+          style={[styles.container, style, { transform: [{ translateY: y }] }]}
+          {...(!handle && { ...panResponder.panHandlers })}
+        >
+          {!!handle && Handle}
+          {children}
+        </Animated.View>
+      </View>
+    ) : (
+      <Animated.View
+        // pointerEvents="box-none"
+        style={[styles.container, style, { transform: [{ translateY: y }] }]}
+        {...(!handle && { ...panResponder.panHandlers })}
+        // {...(!renderHandle && { ...panResponder.panHandlers })}
+      >
+        {!!handle && Handle}
+        {/* {!!renderHandle && renderHandle({ ...panResponder.panHandlers })} */}
+        {children}
+      </Animated.View>
+    );
+  }
+);
+
+BottomSheet.propTypes = {
+  children: PropTypes.oneOfType([
+    PropTypes.node,
+    PropTypes.element,
+    PropTypes.arrayOf(PropTypes.element),
+  ]),
+  style: PropTypes.object,
+  positions: PropTypes.arrayOf(PropTypes.number),
+  handle: PropTypes.element,
+  backdropColor: PropTypes.string,
+  onStateChange: PropTypes.func,
+  onMove: PropTypes.func,
+};
+
+export default BottomSheet;
