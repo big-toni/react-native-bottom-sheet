@@ -1,6 +1,6 @@
 {
   "name": "@big-toni/react-native-bottom-sheet",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "RN component written in JS",
   "main": "index.js",
   "scripts": {
