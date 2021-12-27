@@ -2,6 +2,8 @@
 
 ## Features
 
+**NO DEPENDENCIES**
+
 - Smooth movement animations
 - Plain simple and flexible APIs
 - Customizable backdrop opacity and color
@@ -35,14 +37,18 @@ const sheetRef = useRef(null);
 
 ```jsx
 <BottomSheet
-  handle={<View style={{ height: 20, width }} />}
+  handle={
+    <View style={{ height: 60, width }}>
+      <Text onPress={() => sheetRef.current?.open()}>Open</Text>
+    </View>
+  }
   onMove={(y) => console.log('Drawer moved to: ', y)}
   onStateChange={(y) => console.log('Drawer new state: ', y)}
   ref={sheetRef}
   yPositions={[DRAWER_CLOSED, DRAWER_PEEK, DRAWER_OPEN]}
 >
   <View>
-    <Text onPress={() => sheetRef.current?.open()}>Open</Text>
+    <Text onPress={() => sheetRef.current?.close()}>Open</Text>
   </View>
 </BottomSheet>
 ```
