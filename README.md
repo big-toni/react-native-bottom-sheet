@@ -48,7 +48,7 @@ const sheetRef = useRef(null);
   yPositions={[DRAWER_CLOSED, DRAWER_PEEK, DRAWER_OPEN]}
 >
   <View>
-    <Text onPress={() => sheetRef.current?.close()}>Open</Text>
+    <Text onPress={() => sheetRef.current?.close()}>Close</Text>
   </View>
 </BottomSheet>
 ```
