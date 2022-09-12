@@ -1,6 +1,6 @@
-declare module '../..index.js' {
-  import * as React from 'react';
+import * as React from 'react';
 
+declare module '@big-toni/react-native-bottom-sheet' {
   export type BottomSheetChildren =
     | React.ReactNode
     | React.ReactElement<any>

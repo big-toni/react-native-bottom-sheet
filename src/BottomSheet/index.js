@@ -1,10 +1,12 @@
 import PropTypes from 'prop-types';
 import React, {
   forwardRef,
+  useImperativeHandle,
+  useMemo,
   useRef,
   useState,
-  useImperativeHandle,
 } from 'react';
+
 import {
   Animated,
   PanResponder,
@@ -13,6 +15,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+
 import styles from './styles';
 
 const { height } = Dimensions.get('window');
@@ -52,28 +55,16 @@ const BottomSheet = forwardRef(
     };
 
     const getNextPosition = (currentState, val, margin) => {
-      // const currentIndex = positionsArray.indexOf(currentState);
-      // const higherState = positionsArray[currentIndex + 1];
-      // const lowerState = positionsArray[currentIndex - 1];
-      // if (val > currentState + margin && higherState !== undefined) {
-      //   return higherState;
-      // } else if (val < currentState - margin && lowerState !== undefined) {
-      //   return lowerState;
-      // } else {
-      //   return val;
-      // }
-
-      return positionsArray.reduce((a, b) => {
-        let aDiff = Math.abs(a - val);
-        let bDiff = Math.abs(b - val);
-
-        if (aDiff == bDiff) {
-          // Choose largest vs smallest (> vs <)
-          return a > b ? a : b;
-        } else {
-          return bDiff < aDiff ? b : a;
-        }
-      });
+      const currentIndex = positionsArray.indexOf(currentState);
+      const higherState = positionsArray[currentIndex + 1];
+      const lowerState = positionsArray[currentIndex - 1];
+      if (val > currentState + margin && higherState !== undefined) {
+        return higherState;
+      } else if (val < currentState - margin && lowerState !== undefined) {
+        return lowerState;
+      } else {
+        return currentState;
+      }
     };
 
     const y = useRef(new Animated.Value(-lowestPosition)).current;
@@ -105,14 +96,16 @@ const BottomSheet = forwardRef(
       return Math.abs(dy) >= 10;
     };
 
-    const panResponder = useRef(
-      PanResponder.create({
-        onMoveShouldSetPanResponder,
-        onStartShouldSetPanResponderCapture: onMoveShouldSetPanResponder,
-        onPanResponderMove,
-        onPanResponderRelease,
-      })
-    ).current;
+    const panResponder = useMemo(
+      () =>
+        PanResponder.create({
+          onMoveShouldSetPanResponder,
+          onStartShouldSetPanResponderCapture: onMoveShouldSetPanResponder,
+          onPanResponderMove,
+          onPanResponderRelease,
+        }),
+      [position]
+    );
 
     useImperativeHandle(ref, () => ({
       open: () => {
